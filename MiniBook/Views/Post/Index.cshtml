@@ -1,31 +1,133 @@
 ﻿@model IEnumerable<MiniBook.Models.Post>
-
 @{
-    ViewData["Title"] = "Liste des posts";
+    ViewData["Title"] = "MiniBook";
 }
+<div class="container">
+    <h1 class="page-title">MiniBook</h1>
 
-<h1>Liste des posts</h1>
+    <div class="grid">
+        <!-- Formulaire -->
+        <section class="card">
+            <h2>Publier un nouveau post</h2>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Nouveau post</a>
-</p>
+            <form id="post-form" asp-action="CreateAjax" asp-controller="Post" method="post">
+                @Html.AntiForgeryToken()
 
-<table class="table table-striped">
-    <thead>
-    <tr>
-        <th>Titre</th>
-        <th>Auteur</th>
-        <th>Date de création</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var post in Model)
-    {
-        <tr>
-            <td>@post.Title</td>
-            <td>@post.User?.UserName</td>
-            <td>@post.CreatedAt.ToLocalTime()</td>
-        </tr>
+                <div class="mb">
+                    <label for="Title">Titre</label>
+                    <input id="Title" name="Title" maxlength="120" required class="input" />
+                    <div data-valmsg-for="Title" class="err"></div>
+                </div>
+
+                <div class="mb">
+                    <label for="Content">Contenu</label>
+                    <textarea id="Content" name="Content" rows="6" required class="textarea"></textarea>
+                    <div data-valmsg-for="Content" class="err"></div>
+                </div>
+
+                <button type="submit" class="btn">Publier</button>
+                <div id="form-status" class="status" hidden></div>
+            </form>
+        </section>
+
+        <!-- Liste des posts -->
+        <section class="card">
+            <h2>Posts récents</h2>
+            <div id="post-list" class="post-list">
+                @foreach (var p in Model)
+                {
+                    <article class="post-card" data-id="@p.Id">
+                        <header class="post-header">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span class="avatar">@((p.User?.UserName ?? "?").Substring(0,1).ToUpper())</span>
+                                <h3 class="post-title">@p.Title</h3>
+                            </div>
+                            <div class="post-meta">par <strong>@p.User?.UserName</strong> • @p.CreatedAt.ToLocalTime()</div>
+                        </header>
+                        <p class="post-content">@p.Content</p>
+                    </article>
+                }
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('post-form');
+  const status = document.getElementById('form-status');
+  const list = document.getElementById('post-list');
+
+  function showStatus(msg, ok) {
+    status.textContent = msg;
+    status.hidden = false;
+    status.className = 'status ' + (ok ? 'ok' : 'ko');
+    setTimeout(() => { status.hidden = true; }, 3000);
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // efface anciens messages d'erreur
+    document.querySelectorAll('.err').forEach(el => el.textContent = '');
+
+    const formData = new FormData(form);
+
+    try {
+      const resp = await fetch(form.action, {
+        method: 'POST',
+        body: formData,
+    
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        if (data && data.errors) {
+          // affiche messages côté champs
+          for (const [field, msgs] of Object.entries(data.errors)) {
+            const span = document.querySelector(`[data-valmsg-for="${field}"]`);
+            if (span) span.textContent = msgs.join(' ');
+          }
+          showStatus("Erreur de validation.", false);
+        } else {
+          showStatus("Une erreur est survenue.", false);
+        }
+        return;
+      }
+
+      const { ok, post } = await resp.json();
+      if (!ok) {
+        showStatus("Création échouée.", false);
+        return;
+      }
+
+      // Construit la carte et l'insère en haut de la liste
+      const card = document.createElement('article');
+      card.className = 'post-card';
+      card.dataset.id = post.id;
+      card.innerHTML = `
+        <header class="post-header">
+          <h3 class="post-title"></h3>
+          <div class="post-meta"></div>
+        </header>
+        <p class="post-content"></p>
+      `;
+      card.querySelector('.post-title').textContent = post.title;
+      card.querySelector('.post-meta').innerHTML = `par <strong>${post.author}</strong> • ${new Date(post.createdAt).toLocaleString()}`;
+      card.querySelector('.post-content').textContent = post.content;
+
+      list.prepend(card);
+
+      // reset form
+      form.reset();
+      showStatus("Post publié ✅", true);
+
+    } catch (err) {
+      console.error(err);
+      showStatus("Erreur réseau.", false);
     }
-    </tbody>
-</table>
+  });
+});
+</script>
+}

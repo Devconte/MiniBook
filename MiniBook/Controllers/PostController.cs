@@ -1,4 +1,4 @@
-
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniBook.Data;
@@ -9,14 +9,10 @@ namespace MiniBook.Controllers
     public class PostController : Controller
     {
         private readonly AppDbContext _db;
+        public PostController(AppDbContext db) => _db = db;
 
-        public PostController(AppDbContext db)
-        {
-            _db = db;
-        }
-
-        // GET: /Post
-        // Affiche la liste des posts, auteur inclus, triés du plus récent au plus ancien
+        
+        [HttpGet]
         public async Task<IActionResult> Index()
         {
             var posts = await _db.Posts
@@ -27,32 +23,55 @@ namespace MiniBook.Controllers
             return View(posts);
         }
 
-        // GET: /Post/Create
-        // Affiche le formulaire de création
-        [HttpGet]
-        public IActionResult Create()
+        
+        public class PostCreateVm
         {
-            return View(new Post());
+            [Required, StringLength(120)]
+            public string Title { get; set; } = string.Empty;
+            [Required]
+            public string Content { get; set; } = string.Empty;
         }
 
-        // POST: /Post/Create
-        // Valide et enregistre un nouveau post
+     
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Title,Content")] Post post)
+        public async Task<IActionResult> CreateAjax([FromForm] PostCreateVm vm)
         {
             if (!ModelState.IsValid)
-                return View(post);
+            {
+                var errs = ModelState.ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+                return BadRequest(new { ok = false, errors = errs });
+            }
 
-            // ⚠️ En attendant l’authentification, on force un utilisateur existant.
-            // Remplace 1 par l'Id d'un user présent en base (ou récupère l'Id utilisateur connecté plus tard).
-            post.UserId = 1;
-            post.CreatedAt = DateTime.UtcNow;
+            var user = await _db.Users.OrderBy(u => u.Id).FirstOrDefaultAsync();
+            if (user == null)
+                return Problem("Aucun utilisateur en base. Vérifie le seed.");
+
+            var post = new Post
+            {
+                Title = vm.Title,
+                Content = vm.Content,
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow
+            };
 
             _db.Posts.Add(post);
             await _db.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Index));
+            return Json(new
+            {
+                ok = true,
+                post = new
+                {
+                    id = post.Id,
+                    title = post.Title,
+                    content = post.Content,
+                    createdAt = post.CreatedAt,
+                    author = user.UserName
+                }
+            });
         }
     }
 }
