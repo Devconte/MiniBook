@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniBook.Data;
@@ -11,7 +12,6 @@ namespace MiniBook.Controllers
         private readonly AppDbContext _db;
         public PostController(AppDbContext db) => _db = db;
 
-        
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -23,7 +23,6 @@ namespace MiniBook.Controllers
             return View(posts);
         }
 
-        
         public class PostCreateVm
         {
             [Required, StringLength(120)]
@@ -32,7 +31,6 @@ namespace MiniBook.Controllers
             public string Content { get; set; } = string.Empty;
         }
 
-     
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAjax([FromForm] PostCreateVm vm)
@@ -45,6 +43,7 @@ namespace MiniBook.Controllers
                 return BadRequest(new { ok = false, errors = errs });
             }
 
+            // ⚠️ Ici tu prends "le premier user" → plus tard il faudra remplacer par l’utilisateur connecté
             var user = await _db.Users.OrderBy(u => u.Id).FirstOrDefaultAsync();
             if (user == null)
                 return Problem("Aucun utilisateur en base. Vérifie le seed.");
@@ -72,6 +71,22 @@ namespace MiniBook.Controllers
                     author = user.UserName
                 }
             });
+        }
+
+        // 👇 Ajout : suppression réservée aux Admins
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var post = await _db.Posts.FindAsync(id);
+            if (post == null)
+                return NotFound();
+
+            _db.Posts.Remove(post);
+            await _db.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

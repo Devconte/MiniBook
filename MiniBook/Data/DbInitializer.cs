@@ -1,4 +1,5 @@
 using MiniBook.Models;
+using BCrypt.Net;
 
 namespace MiniBook.Data
 {
@@ -9,18 +10,30 @@ namespace MiniBook.Data
             // Crée la base si elle n'existe pas encore
             context.Database.EnsureCreated();
 
-            // Vérifie si un utilisateur existe déjà
+            // Vérifie si des utilisateurs existent déjà
             if (!context.Users.Any())
             {
+                // --- Utilisateur standard ---
                 var demoUser = new User
                 {
                     UserName = "demo",
                     Email = "demo@example.com",
-                    PasswordHash = new byte[64], // tableau vide de 64 octets
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("demo123"),
+                    Role = "User",
                     CreatedAt = DateTime.UtcNow
                 };
 
-                context.Users.Add(demoUser);
+                // --- Administrateur ---
+                var adminUser = new User
+                {
+                    UserName = "admin",
+                    Email = "admin@minibook.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    Role = "Admin",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                context.Users.AddRange(demoUser, adminUser);
                 context.SaveChanges();
             }
         }

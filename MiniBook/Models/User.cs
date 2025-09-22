@@ -12,8 +12,9 @@ public class User
     [Required, StringLength(255), EmailAddress]
     public string Email { get; set; } = null!;
 
-    [Required]
-    public byte[] PasswordHash { get; set; } = Array.Empty<byte>();
+    [Required, StringLength(255)]
+    public string PasswordHash { get; set; } = string.Empty;
+
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

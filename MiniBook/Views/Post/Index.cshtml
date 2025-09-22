@@ -2,6 +2,9 @@
 @{
     ViewData["Title"] = "MiniBook";
 }
+
+
+
 <div class="container">
     <h1 class="page-title">MiniBook</h1>
 
@@ -42,8 +45,20 @@
                                 <span class="avatar">@((p.User?.UserName ?? "?").Substring(0,1).ToUpper())</span>
                                 <h3 class="post-title">@p.Title</h3>
                             </div>
-                            <div class="post-meta">par <strong>@p.User?.UserName</strong> • @p.CreatedAt.ToLocalTime()</div>
+                            <div class="post-meta">
+                                par <strong>@p.User?.UserName</strong> • @p.CreatedAt.ToLocalTime()
+                            </div>
+
+                            @* 👇 Bouton Supprimer visible uniquement si Admin *@
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <form asp-action="Delete" asp-controller="Post" asp-route-id="@p.Id" method="post" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                                </form>
+                            }
                         </header>
+
                         <p class="post-content">@p.Content</p>
                     </article>
                 }
@@ -69,22 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // efface anciens messages d'erreur
     document.querySelectorAll('.err').forEach(el => el.textContent = '');
-
     const formData = new FormData(form);
 
     try {
-      const resp = await fetch(form.action, {
-        method: 'POST',
-        body: formData,
-    
-      });
+      const resp = await fetch(form.action, { method: 'POST', body: formData });
 
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
         if (data && data.errors) {
-          // affiche messages côté champs
           for (const [field, msgs] of Object.entries(data.errors)) {
             const span = document.querySelector(`[data-valmsg-for="${field}"]`);
             if (span) span.textContent = msgs.join(' ');
@@ -102,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Construit la carte et l'insère en haut de la liste
       const card = document.createElement('article');
       card.className = 'post-card';
       card.dataset.id = post.id;
@@ -114,15 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="post-content"></p>
       `;
       card.querySelector('.post-title').textContent = post.title;
-      card.querySelector('.post-meta').innerHTML = `par <strong>${post.author}</strong> • ${new Date(post.createdAt).toLocaleString()}`;
+      card.querySelector('.post-meta').innerHTML =
+        `par <strong>${post.author}</strong> • ${new Date(post.createdAt).toLocaleString()}`;
       card.querySelector('.post-content').textContent = post.content;
 
       list.prepend(card);
-
-      // reset form
       form.reset();
       showStatus("Post publié ✅", true);
-
     } catch (err) {
       console.error(err);
       showStatus("Erreur réseau.", false);
