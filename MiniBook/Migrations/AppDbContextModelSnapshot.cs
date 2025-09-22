@@ -77,9 +77,19 @@ namespace MiniBook.Migrations
                     b.Property<byte>("Status")
                         .HasColumnType("tinyint");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UserId1")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AddresseeId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
 
                     b.HasIndex("RequesterId", "AddresseeId")
                         .IsUnique();
@@ -140,6 +150,13 @@ namespace MiniBook.Migrations
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("User");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -208,6 +225,14 @@ namespace MiniBook.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("MiniBook.Models.User", null)
+                        .WithMany("FriendshipsReceived")
+                        .HasForeignKey("UserId");
+
+                    b.HasOne("MiniBook.Models.User", null)
+                        .WithMany("FriendshipsSent")
+                        .HasForeignKey("UserId1");
+
                     b.Navigation("Addressee");
 
                     b.Navigation("Requester");
@@ -243,6 +268,10 @@ namespace MiniBook.Migrations
             modelBuilder.Entity("MiniBook.Models.User", b =>
                 {
                     b.Navigation("Comments");
+
+                    b.Navigation("FriendshipsReceived");
+
+                    b.Navigation("FriendshipsSent");
 
                     b.Navigation("Posts");
 

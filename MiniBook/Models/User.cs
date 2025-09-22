@@ -1,4 +1,3 @@
-
 using System.ComponentModel.DataAnnotations;
 
 namespace MiniBook.Models;
@@ -13,22 +12,23 @@ public class User
     [Required, StringLength(255), EmailAddress]
     public string Email { get; set; } = null!;
 
-    // Hash stocké en base (ex: PBKDF2/BCrypt -> byte[])
     [Required]
     public byte[] PasswordHash { get; set; } = Array.Empty<byte>();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // 👇 Nouveau champ pour l'autorisation
+    [Required, StringLength(20)]
+    public string Role { get; set; } = "User";  // "User" par défaut, peut être "Admin"
+
     // Navigations
     public UserProfile? Profile { get; set; }
     public ICollection<Post> Posts { get; set; } = new List<Post>();
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
-    
-    // 👉 Navigations liées à Friendship
+
     public ICollection<Friendship> FriendshipsSent { get; set; } = new List<Friendship>();
     public ICollection<Friendship> FriendshipsReceived { get; set; } = new List<Friendship>();
 
-    // 👉 Méthode AjouterAmi
     public Friendship AddFriend(User addressee)
     {
         if (addressee == null) throw new ArgumentNullException(nameof(addressee));

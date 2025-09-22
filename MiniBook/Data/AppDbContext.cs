@@ -41,20 +41,25 @@ namespace MiniBook.Data
                     .HasColumnType("datetime2(0)")
                     .HasDefaultValueSql("SYSUTCDATETIME()");
 
+                e.Property(x => x.Role)
+                    .HasMaxLength(20)
+                    .IsRequired()
+                    .HasDefaultValue("User");
+
                 e.HasIndex(x => x.UserName).IsUnique();
                 e.HasIndex(x => x.Email).IsUnique();
 
                 e.HasOne(x => x.Profile)
                  .WithOne(p => p.User)
                  .HasForeignKey<UserProfile>(p => p.UserId)
-                 .OnDelete(DeleteBehavior.Cascade); // supprimer le profil avec l'utilisateur
+                 .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ===== USER PROFILE (1-1) =====
             b.Entity<UserProfile>(e =>
             {
                 e.ToTable("UserProfiles");
-                e.HasKey(x => x.UserId); // PK = FK
+                e.HasKey(x => x.UserId);
 
                 e.Property(x => x.Bio).HasMaxLength(500);
                 e.Property(x => x.AvatarUrl).HasMaxLength(400);
@@ -81,7 +86,7 @@ namespace MiniBook.Data
                 e.HasOne(x => x.User)
                  .WithMany(u => u.Posts)
                  .HasForeignKey(x => x.UserId)
-                 .OnDelete(DeleteBehavior.Cascade); // supprimer les posts si l'user est supprimé
+                 .OnDelete(DeleteBehavior.Cascade);
 
                 e.HasIndex(x => new { x.UserId, x.CreatedAt });
             });
@@ -100,13 +105,11 @@ namespace MiniBook.Data
                     .HasColumnType("datetime2(0)")
                     .HasDefaultValueSql("SYSUTCDATETIME()");
 
-                // Comment -> Post : CASCADE ok
                 e.HasOne(x => x.Post)
                  .WithMany(p => p.Comments)
                  .HasForeignKey(x => x.PostId)
                  .OnDelete(DeleteBehavior.Cascade);
 
-                // Comment -> User (Author) : RESTRICT pour éviter multiple cascade paths
                 e.HasOne(x => x.Author)
                  .WithMany(u => u.Comments)
                  .HasForeignKey(x => x.AuthorId)
@@ -122,13 +125,12 @@ namespace MiniBook.Data
                 e.HasKey(x => x.Id);
 
                 e.Property(x => x.Status)
-                    .HasColumnType("tinyint"); // map enum byte
+                    .HasColumnType("tinyint");
 
                 e.Property(x => x.RequestedAt)
                     .HasColumnType("datetime2(0)")
                     .HasDefaultValueSql("SYSUTCDATETIME()");
 
-                // éviter cascades croisées : Restrict des deux côtés
                 e.HasOne(x => x.Requester)
                  .WithMany()
                  .HasForeignKey(x => x.RequesterId)
