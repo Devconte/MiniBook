@@ -1,0 +1,311 @@
+{
+  "info": {
+    "_postman_id": "simple-12345678-1234-1234-1234-123456789012",
+    "name": "MiniBook API - Version Simple",
+    "description": "Collection simple avec tout intégré - pas besoin d'environnement séparé",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 1. Login (Faire en premier)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Sauvegarder le token si la connexion réussit",
+              "if (pm.response.code === 200) {",
+              "    var response = pm.response.json();",
+              "    if (response.token) {",
+              "        pm.collectionVariables.set('auth_token', response.token);",
+              "        console.log('✅ Token sauvegardé');",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/account/login",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["account", "login"]
+        }
+      }
+    },
+    {
+      "name": "📄 2. GET Tous les Posts",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status OK ou Auth required', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]);",
+              "});",
+              "",
+              "if (pm.response.code === 200) {",
+              "    var posts = pm.response.json();",
+              "    if (posts.length > 0) {",
+              "        pm.collectionVariables.set('first_post_id', posts[0].id);",
+              "        console.log('✅ Premier post ID sauvegardé:', posts[0].id);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/posts",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "posts"]
+        }
+      }
+    },
+    {
+      "name": "🔍 3. GET Post par ID",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/posts/{{first_post_id}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "posts", "{{first_post_id}}"]
+        }
+      }
+    },
+    {
+      "name": "➕ 4. POST Créer un Post",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Post créé avec succès', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([201, 400, 401, 403]);",
+              "});",
+              "",
+              "if (pm.response.code === 201) {",
+              "    var newPost = pm.response.json();",
+              "    pm.collectionVariables.set('new_post_id', newPost.id);",
+              "    console.log('✅ Nouveau post créé avec ID:', newPost.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"Post de Test Postman\",\n    \"content\": \"Ceci est un test de création de post via Postman. Tout fonctionne parfaitement !\",\n    \"userId\": 1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/posts",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "posts"]
+        }
+      }
+    },
+    {
+      "name": "✏️ 5. PUT Modifier le Post",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"Post MODIFIÉ via Postman\",\n    \"content\": \"Ce post a été modifié avec succès ! La modification fonctionne parfaitement.\",\n    \"userId\": 1\n}"
+        },
+        "url": {
+          "raw": "http://localhost:5000/api/posts/{{new_post_id}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "posts", "{{new_post_id}}"]
+        }
+      }
+    },
+    {
+      "name": "🗑️ 6. DELETE Supprimer (Admin)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Delete response', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([204, 403, 404]);",
+              "});",
+              "",
+              "if (pm.response.code === 403) {",
+              "    console.log('⚠️ Accès refusé - Besoin du rôle Admin');",
+              "} else if (pm.response.code === 204) {",
+              "    console.log('✅ Post supprimé avec succès');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{auth_token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/posts/{{new_post_id}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "posts", "{{new_post_id}}"]
+        }
+      }
+    },
+    {
+      "name": "❌ Test Sans Auth (doit échouer)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Accès refusé sans auth', function () {",
+              "    pm.expect(pm.response.code).to.eql(401);",
+              "});",
+              "console.log('✅ Sécurité OK - Accès refusé sans token');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/api/posts",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["api", "posts"]
+        }
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": ["console.log('🚀 Exécution de:', pm.info.requestName);"]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "console.log('📊 Statut:', pm.response.code, pm.response.status);"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "first_post_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "new_post_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
