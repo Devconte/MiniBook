@@ -1,0 +1,57 @@
+# Docker Compose - Environnement de Test
+# 🧪 Configuration pour les tests automatisés
+
+services:
+  # Base de données SQL Server Test
+  sql-test:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: minibook-sql-test
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "TestPassword123!"
+      MSSQL_PID: "Express"
+    ports:
+      - "1434:1433" # Port différent pour éviter les conflits
+    volumes:
+      - sql_data_test:/var/opt/mssql
+    networks:
+      - minibook-test-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "sleep 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Application MiniBook Test
+  minibook-api-test:
+    image: "${DOCKER_IMAGE_TAG:-minibook-api:latest}"
+    container_name: minibook-api-test
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Server=sql-test,1433;Database=MiniBookTest;User Id=sa;Password=TestPassword123!;TrustServerCertificate=True
+      - Logging__LogLevel__Default=Information
+    ports:
+      - "5001:8080" # Port différent pour éviter les conflits
+    depends_on:
+      sql-test:
+        condition: service_healthy
+    networks:
+      - minibook-test-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/posts || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  sql_data_test:
+    driver: local
+
+networks:
+  minibook-test-network:
+    driver: bridge

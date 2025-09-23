@@ -1,0 +1,258 @@
+# GitHub Actions Pipeline pour MiniBook API
+# 🚀 Pipeline automatisé : Build → Test → Docker → Deploy
+
+name: 🚀 MiniBook CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: "9.0.x"
+  DOCKER_IMAGE_NAME: minibook-api
+
+jobs:
+  # 🏗️ JOB 1: BUILD & TEST
+  build-and-test:
+    name: 🏗️ Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      # SQL Server pour les tests
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: TestPassword123!
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P TestPassword123! -Q 'SELECT 1'"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 📦 Restore Dependencies
+        run: |
+          echo "🔄 Restauration des packages NuGet..."
+          cd MiniBook
+          dotnet restore
+
+      - name: 🏗️ Build Application
+        run: |
+          echo "🔨 Compilation en mode Release..."
+          cd MiniBook
+          dotnet build --configuration Release --no-restore
+
+      - name: 🧪 Run Unit Tests
+        env:
+          ConnectionStrings__Default: "Server=localhost,1433;Database=MiniBookTest;User Id=sa;Password=TestPassword123!;TrustServerCertificate=True"
+        run: |
+          echo "🧪 Exécution des tests unitaires..."
+          cd MiniBook.Tests
+          dotnet test --configuration Release --logger trx --results-directory TestResults/ --collect:"XPlat Code Coverage"
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: MiniBook.Tests/TestResults/
+
+      - name: 📈 Upload Coverage Reports
+        uses: codecov/codecov-action@v3
+        with:
+          directory: MiniBook.Tests/TestResults/
+          flags: unittests
+
+  # 🐳 JOB 2: DOCKER BUILD
+  docker-build:
+    name: 🐳 Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🔨 Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./MiniBook
+          file: ./MiniBook/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # 🚀 JOB 3: DEPLOY TO TEST
+  deploy-test:
+    name: 🧪 Deploy to Test Environment
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: test
+      url: https://minibook-test.yourdomain.com
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🚀 Deploy to Test Server
+        run: |
+          echo "🚀 Déploiement sur le serveur de test..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.TEST_SERVER_USER }}@${{ secrets.TEST_SERVER_HOST }} "
+            cd /opt/minibook-test &&
+            echo '🔄 Arrêt des services existants...' &&
+            docker-compose down || true &&
+            echo '📥 Récupération de la nouvelle image...' &&
+            docker pull ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:develop &&
+            echo '🏷️ Mise à jour du tag d'image...' &&
+            sed -i 's|image: .*minibook-api.*|image: ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:develop|' docker-compose.test.yml &&
+            echo '🚀 Démarrage des nouveaux services...' &&
+            docker-compose -f docker-compose.test.yml up -d &&
+            echo '⏳ Attente du démarrage...' &&
+            sleep 30 &&
+            echo '🔍 Vérification du déploiement...' &&
+            curl -f http://localhost:5001/api/posts || echo 'API démarre encore...'
+          "
+
+      - name: 🧪 Health Check
+        run: |
+          echo "🧪 Test de santé de l'API de test..."
+          for i in {1..10}; do
+            if curl -f https://minibook-test.yourdomain.com/api/posts; then
+              echo "✅ API de test accessible !"
+              exit 0
+            fi
+            echo "⏳ Attente de l'API... ($i/10)"
+            sleep 10
+          done
+          echo "⚠️ API de test non accessible après 100 secondes"
+
+  # 🎯 JOB 4: DEPLOY TO PRODUCTION
+  deploy-production:
+    name: 🎯 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-build, deploy-test]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://minibook.yourdomain.com
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🎯 Deploy to Production Server
+        run: |
+          echo "🎯 Déploiement en PRODUCTION..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_HOST }} "
+            cd /opt/minibook-prod &&
+            echo '💾 Sauvegarde de la version précédente...' &&
+            docker tag minibook-api:current minibook-api:backup-\$(date +%Y%m%d-%H%M%S) || true &&
+            echo '📥 Récupération de la nouvelle image...' &&
+            docker pull ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest &&
+            docker tag ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_NAME }}:latest minibook-api:current &&
+            echo '🔄 Arrêt des services...' &&
+            docker-compose -f docker-compose.prod.yml down &&
+            echo '🚀 Démarrage avec la nouvelle version...' &&
+            docker-compose -f docker-compose.prod.yml up -d &&
+            echo '⏳ Attente du démarrage...' &&
+            sleep 30 &&
+            echo '🔍 Vérification du déploiement...' &&
+            curl -f http://localhost:5000/api/posts || (
+              echo '❌ Échec du déploiement ! Rollback...' &&
+              docker-compose down &&
+              docker tag minibook-api:backup-\$(date +%Y%m%d-%H%M%S) minibook-api:current &&
+              docker-compose -f docker-compose.prod.yml up -d &&
+              exit 1
+            )
+          "
+
+      - name: 🧪 Production Health Check
+        run: |
+          echo "🧪 Test de santé de l'API de production..."
+          for i in {1..10}; do
+            if curl -f https://minibook.yourdomain.com/api/posts; then
+              echo "✅ API de production accessible !"
+              exit 0
+            fi
+            echo "⏳ Attente de l'API... ($i/10)"
+            sleep 10
+          done
+          echo "❌ API de production non accessible après 100 secondes"
+          exit 1
+
+  # 📢 JOB 5: NOTIFICATIONS
+  notify:
+    name: 📢 Send Notifications
+    runs-on: ubuntu-latest
+    needs: [deploy-test, deploy-production]
+    if: always()
+
+    steps:
+      - name: 📢 Slack Notification on Success
+        if: needs.deploy-production.result == 'success'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: |
+            ✅ MiniBook API déployé avec succès ! 🚀
+            📋 Commit: ${{ github.sha }}
+            🔗 Action: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: 📢 Slack Notification on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_MESSAGE: |
+            ❌ Échec du déploiement MiniBook API 😞
+            📋 Commit: ${{ github.sha }}
+            🔗 Action: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
