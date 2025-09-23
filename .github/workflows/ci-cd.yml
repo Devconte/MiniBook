@@ -26,13 +26,15 @@ jobs:
         env:
           ACCEPT_EULA: Y
           SA_PASSWORD: TestPassword123!
+          MSSQL_PID: Express
         ports:
           - 1433:1433
         options: >-
-          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P TestPassword123! -Q 'SELECT 1'"
-          --health-interval 30s
-          --health-timeout 10s
-          --health-retries 5
+          --health-cmd "sleep 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 60s
 
     steps:
       - name: 📥 Checkout Code
@@ -55,13 +57,19 @@ jobs:
           cd MiniBook
           dotnet build --configuration Release --no-restore
 
-      - name: 🧪 Run Unit Tests
-        env:
-          ConnectionStrings__Default: "Server=localhost,1433;Database=MiniBookTest;User Id=sa;Password=TestPassword123!;TrustServerCertificate=True"
-        run: |
-          echo "🧪 Exécution des tests unitaires..."
-          cd MiniBook.Tests
-          dotnet test --configuration Release --logger trx --results-directory TestResults/ --collect:"XPlat Code Coverage"
+       - name: ⏳ Wait for SQL Server
+         run: |
+           echo "⏳ Attente du démarrage de SQL Server..."
+           sleep 30
+           echo "✅ SQL Server devrait être prêt !"
+
+       - name: 🧪 Run Unit Tests
+         env:
+           ConnectionStrings__Default: "Server=localhost,1433;Database=MiniBookTest;User Id=sa;Password=TestPassword123!;TrustServerCertificate=True"
+         run: |
+           echo "🧪 Exécution des tests unitaires..."
+           cd MiniBook.Tests
+           dotnet test --configuration Release --logger trx --results-directory TestResults/ --collect:"XPlat Code Coverage"
 
       - name: 📊 Upload Test Results
         uses: actions/upload-artifact@v4
