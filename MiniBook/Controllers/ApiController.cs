@@ -7,12 +7,25 @@ using MiniBook.Models;
 namespace MiniBook.Controllers.Api
 {
     [ApiController]
-    [Route("api/[controller]")]
-    [Authorize] // 🔒 nécessite d’être authentifié
+    [Route("api/posts")]
+    [Authorize] // 🔒 Authentification réactivée
     public class PostsController : ControllerBase
     {
         private readonly AppDbContext _db;
         public PostsController(AppDbContext db) => _db = db;
+
+        // Endpoint de test sans base de données
+        [HttpGet("test")]
+        [AllowAnonymous]
+        public IActionResult Test()
+        {
+            return Ok(new
+            {
+                message = "🎉 CORS et API fonctionnent !",
+                timestamp = DateTime.UtcNow,
+                server = "MiniBook API Docker"
+            });
+        }
 
         // GET: api/posts
         [HttpGet]

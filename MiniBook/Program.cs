@@ -16,9 +16,32 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Account/Login";           // redirige si pas connecté
         options.AccessDeniedPath = "/Account/AccessDenied"; // redirige si accès refusé
+        
+        // Pour les requêtes API, retourner 401 au lieu de rediriger
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = 401;
+                return Task.CompletedTask;
+            }
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "http://localhost:5001")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Important pour les cookies d'authentification
+    });
+});
 
 // MVC
 builder.Services.AddControllersWithViews();
@@ -32,14 +55,27 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// === Seed des données ===
-using (var scope = app.Services.CreateScope())
+// === Seed des données (en arrière-plan) ===
+_ = Task.Run(async () =>
 {
+    await Task.Delay(5000); // Laisser l'API démarrer d'abord
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbInitializer.Seed(db);
-}
+    try
+    {
+        DbInitializer.Seed(db);
+        Console.WriteLine("✅ DB initialisée");
+    }
+    catch 
+    {
+        Console.WriteLine("⚠️ DB pas encore prête");
+    }
+});
 
 app.UseHttpsRedirection();
+
+// 🔧 CORS avant UseRouting pour être plus efficace
+app.UseCors("AllowAngular");
 
 // Nouveau mécanisme "Static Assets" (.NET 9 template)
 app.MapStaticAssets();
@@ -87,6 +123,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     Console.WriteLine("   DELETE /api/posts/{id}   - Supprimer un post (Admin)");
     Console.WriteLine();
     Console.WriteLine("🔐 Note : Tous les endpoints nécessitent une authentification");
+    Console.WriteLine("🔐 CORS : Autorisé pour Angular (ports 4200, 64541, 4201)");
     Console.WriteLine("🚀 ===============================================");
     Console.WriteLine();
 });
