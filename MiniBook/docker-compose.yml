@@ -1,4 +1,5 @@
 services:
+  # Base de données SQL Server
   sql:
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: linux/amd64
@@ -10,5 +11,28 @@ services:
       - "1433:1433"
     volumes:
       - mssqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "sleep 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Application MiniBook
+  minibook-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minibook-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Default=Server=sql,1433;Database=SocNet;User Id=sa;Password=YourStrong@Passw0rd!;TrustServerCertificate=True
+    ports:
+      - "5001:8080"
+    depends_on:
+      sql:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   mssqldata:

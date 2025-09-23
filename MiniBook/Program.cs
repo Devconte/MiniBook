@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.EntityFrameworkCore;
 using MiniBook.Data;
 
@@ -53,5 +55,40 @@ app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Post}/{action=Index}/{id?}") // 🚀 je mets Post par défaut
     .WithStaticAssets();
+
+// === Message de démarrage personnalisé ===
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    var addresses = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()?.Addresses;
+    
+    Console.WriteLine();
+    Console.WriteLine("🚀 ===============================================");
+    Console.WriteLine("🎉 MiniBook API est maintenant disponible !");
+    Console.WriteLine("🚀 ===============================================");
+    
+    if (addresses != null)
+    {
+        foreach (var address in addresses)
+        {
+            Console.WriteLine($"📍 Application Web : {address}");
+            Console.WriteLine($"🔗 API Posts      : {address}/api/posts");
+        }
+    }
+    
+    Console.WriteLine("🗄️  Base de données : SQL Server (Docker) - localhost:1433");
+    Console.WriteLine("📋 Collection Postman : MiniBook-API-Simple.postman_collection.json");
+    Console.WriteLine();
+    Console.WriteLine("💡 Endpoints disponibles :");
+    Console.WriteLine("   GET    /api/posts        - Lister tous les posts");
+    Console.WriteLine("   GET    /api/posts/{id}   - Récupérer un post");
+    Console.WriteLine("   POST   /api/posts        - Créer un post");
+    Console.WriteLine("   PUT    /api/posts/{id}   - Modifier un post");
+    Console.WriteLine("   DELETE /api/posts/{id}   - Supprimer un post (Admin)");
+    Console.WriteLine();
+    Console.WriteLine("🔐 Note : Tous les endpoints nécessitent une authentification");
+    Console.WriteLine("🚀 ===============================================");
+    Console.WriteLine();
+});
 
 app.Run();
