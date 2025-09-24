@@ -19,64 +19,43 @@ jobs:
     name: 🏗️ Build & Test
     runs-on: ubuntu-latest
 
-    services:
-      # SQL Server pour les tests
-      sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-          ACCEPT_EULA: Y
-          SA_PASSWORD: TestPassword123!
-          MSSQL_PID: Express
-        ports:
-          - 1433:1433
-        options: >-
-          --health-cmd "sleep 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-          --health-start-period 60s
+    # Tests unitaires isolés - pas besoin de DB
 
     steps:
-    - name: 📥 Checkout Code
-      uses: actions/checkout@v4
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
 
-    - name: 🔧 Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: 📦 Restore Dependencies
-      run: |
-        echo "🔄 Restauration des packages NuGet..."
-        cd MiniBook
-        dotnet restore
+      - name: 📦 Restore Dependencies
+        run: |
+          echo "🔄 Restauration des packages NuGet..."
+          cd MiniBook
+          dotnet restore
 
-    - name: 🏗️ Build Application
-      run: |
-        echo "🔨 Compilation en mode Release..."
-        cd MiniBook
-        dotnet build --configuration Release --no-restore
+      - name: 🏗️ Build Application
+        run: |
+          echo "🔨 Compilation en mode Release..."
+          cd MiniBook
+          dotnet build --configuration Release --no-restore
 
-    - name: ⏳ Wait for SQL Server
-      run: |
-        echo "⏳ Attente du démarrage de SQL Server..."
-        sleep 30
-        echo "✅ SQL Server devrait être prêt !"
+      # Tests unitaires n'ont pas besoin d'attendre
 
-    - name: 🧪 Run Unit Tests
-      env:
-        ConnectionStrings__Default: "Server=localhost,1433;Database=MiniBookTest;User Id=sa;Password=TestPassword123!;TrustServerCertificate=True"
-      run: |
-        echo "🧪 Exécution des tests unitaires..."
-        cd MiniBook.Tests
-        dotnet test --configuration Release --logger trx --results-directory TestResults/ --collect:"XPlat Code Coverage"
+      - name: 🧪 Run Unit Tests
+        run: |
+          echo "🧪 Exécution des tests unitaires..."
+          cd MiniBook.Tests
+          dotnet test --configuration Release --logger trx --results-directory TestResults/
 
-    - name: 📊 Upload Test Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-results
-        path: MiniBook.Tests/TestResults/
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: MiniBook.Tests/TestResults/
 
   # 🐳 JOB 2: DOCKER BUILD
   docker-build:
@@ -86,19 +65,18 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
 
     steps:
-    - name: 📥 Checkout Code
-      uses: actions/checkout@v4
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
 
-    - name: 🐳 Setup Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: 🐳 Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-
-    - name: 🔨 Build Docker Image (Test Only)
-      uses: docker/build-push-action@v5
-      with:
-        context: ./MiniBook
-        file: ./MiniBook/Dockerfile
-        push: false
-        tags: minibook-api:test
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: 🔨 Build Docker Image (Test Only)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./MiniBook
+          file: ./MiniBook/Dockerfile
+          push: false
+          tags: minibook-api:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
