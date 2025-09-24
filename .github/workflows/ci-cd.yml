@@ -50,12 +50,12 @@ jobs:
           cd MiniBook.Tests
           dotnet test --configuration Release --logger trx --results-directory TestResults/
 
-      - name: 📊 Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: MiniBook.Tests/TestResults/
+    - name: 📊 Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ github.run_number }}
+        path: MiniBook.Tests/TestResults/*.trx
 
   # 🐳 JOB 2: DOCKER BUILD
   docker-build:
