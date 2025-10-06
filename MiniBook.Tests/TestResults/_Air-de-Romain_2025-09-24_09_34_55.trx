@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="a7387935-2006-4a5f-81bc-b92e78a13b0f" name="@Air-de-Romain 2025-09-24 09:34:55" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-09-24T09:34:55.4275260+02:00" queuing="2025-09-24T09:34:55.4275260+02:00" start="2025-09-24T09:34:54.9632810+02:00" finish="2025-09-24T09:34:55.4304080+02:00" />
+  <TestSettings name="default" id="b01c936f-7084-4a6f-a71e-f4879ca1742b">
+    <Deployment runDeploymentRoot="_Air-de-Romain_2025-09-24_09_34_55" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="84d036a2-c81f-4c69-aff6-f414c933bd34" testId="cc752175-952f-14ad-0584-ea31e2a333ba" testName="AddFriend_ShouldAddFriendship_ToCollection" computerName="Air-de-Romain" duration="00:00:00.0042131" startTime="2025-09-24T09:34:55.3148180+02:00" endTime="2025-09-24T09:34:55.3341110+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="84d036a2-c81f-4c69-aff6-f414c933bd34" />
+    <UnitTestResult executionId="d694de7f-fadf-4075-9aa7-46695c0222e5" testId="6b035084-eb34-b7ed-b212-27738454f700" testName="IsValid_ReturnsFalse_WhenContentIsEmpty" computerName="Air-de-Romain" duration="00:00:00.0031178" startTime="2025-09-24T09:34:55.3147730+02:00" endTime="2025-09-24T09:34:55.3346280+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d694de7f-fadf-4075-9aa7-46695c0222e5" />
+    <UnitTestResult executionId="092644c4-dc64-4ffb-abd7-12f45c5f51d3" testId="509b602f-9276-8f3a-5557-93dfcf4dd7f3" testName="AddFriend_ShouldThrowArgumentNullException_WhenAddresseeIsNull" computerName="Air-de-Romain" duration="00:00:00.0031450" startTime="2025-09-24T09:34:55.3148170+02:00" endTime="2025-09-24T09:34:55.3341470+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="092644c4-dc64-4ffb-abd7-12f45c5f51d3" />
+    <UnitTestResult executionId="b4b1637a-a878-4b5f-a8cf-6a1bf09b0bb7" testId="9449ff06-673f-6c0c-6778-6fd8ef261e16" testName="IsValid_ReturnsTrue_WhenContentIsCorrect" computerName="Air-de-Romain" duration="00:00:00.0031462" startTime="2025-09-24T09:34:55.3147550+02:00" endTime="2025-09-24T09:34:55.3340860+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b4b1637a-a878-4b5f-a8cf-6a1bf09b0bb7" />
+    <UnitTestResult executionId="36809b1b-bfae-468a-883f-547828185c85" testId="2b2aae2a-d540-8316-4194-40317681c416" testName="IsValid_ReturnsFalse_WhenContentExceeds280Characters" computerName="Air-de-Romain" duration="00:00:00.0030995" startTime="2025-09-24T09:34:55.3148350+02:00" endTime="2025-09-24T09:34:55.3340960+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="36809b1b-bfae-468a-883f-547828185c85" />
+    <UnitTestResult executionId="a9aa7c3c-9c93-41c5-a4fb-b12f6d6b6787" testId="bed0c884-dd14-ca9c-e942-d66185a217e6" testName="AddFriend_ShouldThrowInvalidOperationException_WhenAddingSelf" computerName="Air-de-Romain" duration="00:00:00.0031449" startTime="2025-09-24T09:34:55.3148280+02:00" endTime="2025-09-24T09:34:55.3346470+02:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a9aa7c3c-9c93-41c5-a4fb-b12f6d6b6787" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="IsValid_ReturnsFalse_WhenContentExceeds280Characters" storage="/users/devconte/desktop/angular/minibook/minibook/minibook.tests/bin/release/net9.0/minibook.tests.dll" id="2b2aae2a-d540-8316-4194-40317681c416">
+      <Execution id="36809b1b-bfae-468a-883f-547828185c85" />
+      <TestMethod codeBase="/Users/devconte/Desktop/Angular/MiniBook/MiniBook/MiniBook.Tests/bin/Release/net9.0/MiniBook.Tests.dll" adapterTypeName="executor://mstestadapter/v2" className="MiniBook.Tests.PostTests" name="IsValid_ReturnsFalse_WhenContentExceeds280Characters" />
+    </UnitTest>
+    <UnitTest name="IsValid_ReturnsFalse_WhenContentIsEmpty" storage="/users/devconte/desktop/angular/minibook/minibook/minibook.tests/bin/release/net9.0/minibook.tests.dll" id="6b035084-eb34-b7ed-b212-27738454f700">
+      <Execution id="d694de7f-fadf-4075-9aa7-46695c0222e5" />
+      <TestMethod codeBase="/Users/devconte/Desktop/Angular/MiniBook/MiniBook/MiniBook.Tests/bin/Release/net9.0/MiniBook.Tests.dll" adapterTypeName="executor://mstestadapter/v2" className="MiniBook.Tests.PostTests" name="IsValid_ReturnsFalse_WhenContentIsEmpty" />
+    </UnitTest>
+    <UnitTest name="AddFriend_ShouldThrowArgumentNullException_WhenAddresseeIsNull" storage="/users/devconte/desktop/angular/minibook/minibook/minibook.tests/bin/release/net9.0/minibook.tests.dll" id="509b602f-9276-8f3a-5557-93dfcf4dd7f3">
+      <Execution id="092644c4-dc64-4ffb-abd7-12f45c5f51d3" />
+      <TestMethod codeBase="/Users/devconte/Desktop/Angular/MiniBook/MiniBook/MiniBook.Tests/bin/Release/net9.0/MiniBook.Tests.dll" adapterTypeName="executor://mstestadapter/v2" className="MiniBook.Tests.UserTests" name="AddFriend_ShouldThrowArgumentNullException_WhenAddresseeIsNull" />
+    </UnitTest>
+    <UnitTest name="AddFriend_ShouldAddFriendship_ToCollection" storage="/users/devconte/desktop/angular/minibook/minibook/minibook.tests/bin/release/net9.0/minibook.tests.dll" id="cc752175-952f-14ad-0584-ea31e2a333ba">
+      <Execution id="84d036a2-c81f-4c69-aff6-f414c933bd34" />
+      <TestMethod codeBase="/Users/devconte/Desktop/Angular/MiniBook/MiniBook/MiniBook.Tests/bin/Release/net9.0/MiniBook.Tests.dll" adapterTypeName="executor://mstestadapter/v2" className="MiniBook.Tests.UserTests" name="AddFriend_ShouldAddFriendship_ToCollection" />
+    </UnitTest>
+    <UnitTest name="AddFriend_ShouldThrowInvalidOperationException_WhenAddingSelf" storage="/users/devconte/desktop/angular/minibook/minibook/minibook.tests/bin/release/net9.0/minibook.tests.dll" id="bed0c884-dd14-ca9c-e942-d66185a217e6">
+      <Execution id="a9aa7c3c-9c93-41c5-a4fb-b12f6d6b6787" />
+      <TestMethod codeBase="/Users/devconte/Desktop/Angular/MiniBook/MiniBook/MiniBook.Tests/bin/Release/net9.0/MiniBook.Tests.dll" adapterTypeName="executor://mstestadapter/v2" className="MiniBook.Tests.UserTests" name="AddFriend_ShouldThrowInvalidOperationException_WhenAddingSelf" />
+    </UnitTest>
+    <UnitTest name="IsValid_ReturnsTrue_WhenContentIsCorrect" storage="/users/devconte/desktop/angular/minibook/minibook/minibook.tests/bin/release/net9.0/minibook.tests.dll" id="9449ff06-673f-6c0c-6778-6fd8ef261e16">
+      <Execution id="b4b1637a-a878-4b5f-a8cf-6a1bf09b0bb7" />
+      <TestMethod codeBase="/Users/devconte/Desktop/Angular/MiniBook/MiniBook/MiniBook.Tests/bin/Release/net9.0/MiniBook.Tests.dll" adapterTypeName="executor://mstestadapter/v2" className="MiniBook.Tests.PostTests" name="IsValid_ReturnsTrue_WhenContentIsCorrect" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="cc752175-952f-14ad-0584-ea31e2a333ba" executionId="84d036a2-c81f-4c69-aff6-f414c933bd34" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6b035084-eb34-b7ed-b212-27738454f700" executionId="d694de7f-fadf-4075-9aa7-46695c0222e5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="509b602f-9276-8f3a-5557-93dfcf4dd7f3" executionId="092644c4-dc64-4ffb-abd7-12f45c5f51d3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9449ff06-673f-6c0c-6778-6fd8ef261e16" executionId="b4b1637a-a878-4b5f-a8cf-6a1bf09b0bb7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2b2aae2a-d540-8316-4194-40317681c416" executionId="36809b1b-bfae-468a-883f-547828185c85" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bed0c884-dd14-ca9c-e942-d66185a217e6" executionId="a9aa7c3c-9c93-41c5-a4fb-b12f6d6b6787" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="6" executed="6" passed="6" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>Test Parallelization enabled for /Users/devconte/Desktop/Angular/MiniBook/MiniBook/MiniBook.Tests/bin/Release/net9.0/MiniBook.Tests.dll (Workers: 8, Scope: MethodLevel)
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

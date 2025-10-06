@@ -112,8 +112,49 @@ namespace MiniBook.Controllers
             });
         }
 
+        // API endpoint pour Angular - inscription
+        [HttpPost]
+        [Route("api/account/register")]
+        public IActionResult ApiRegister([FromBody] RegisterApiRequest request)
+        {
+            // Vérifier si l'email existe déjà
+            if (_db.Users.Any(u => u.Email == request.email))
+            {
+                return BadRequest(new { message = "Email déjà utilisé" });
+            }
+
+            // Créer le nouvel utilisateur
+            var user = new Models.User
+            {
+                UserName = request.userName,
+                Email = request.email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.password),
+                Role = "User", // Par défaut
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.Users.Add(user);
+            _db.SaveChanges();
+
+            return Ok(new
+            {
+                id = user.Id,
+                userName = user.UserName,
+                email = user.Email,
+                role = user.Role,
+                message = "Compte créé avec succès"
+            });
+        }
+
         public class LoginApiRequest
         {
+            public string email { get; set; } = string.Empty;
+            public string password { get; set; } = string.Empty;
+        }
+
+        public class RegisterApiRequest
+        {
+            public string userName { get; set; } = string.Empty;
             public string email { get; set; } = string.Empty;
             public string password { get; set; } = string.Empty;
         }

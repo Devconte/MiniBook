@@ -18,9 +18,8 @@ public class User
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // 👇 Nouveau champ pour l'autorisation
     [Required, StringLength(20)]
-    public string Role { get; set; } = "User";  // "User" par défaut, peut être "Admin"
+    public string Role { get; set; } = "User";  
 
     // Navigations
     public UserProfile? Profile { get; set; }
